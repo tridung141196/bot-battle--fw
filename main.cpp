@@ -1,4 +1,4 @@
-/* mbed Microcontroller Library
+ /* mbed Microcontroller Library
  * Copyright (c) 2006-2013 ARM Limited
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,18 +20,18 @@
 
 
 DigitalOut  led1(p7);
-DigitalOut  Relay_1A(p28);
-DigitalOut  Relay_1B(p25);
-DigitalOut  Relay_2A(p24);
-DigitalOut  Relay_2B(p23);
-DigitalOut  Relay_3A(p22);
-DigitalOut  Relay_3B(p21);
-DigitalOut  Relay_4A(p9);
-DigitalOut  Relay_4B(p16);
-DigitalOut  Relay_1(p17);
-DigitalOut  Relay_2(p18);
-DigitalOut  Relay_3(p19);
-DigitalOut  Relay_4(p20);
+DigitalOut  motorleft_A(p28); //Motor left
+DigitalOut  motorleft_B(p25); //
+DigitalOut  motorright_A(p24); //Motor right
+DigitalOut  motorright_B(p23); //
+DigitalOut  Relay_3A(p22); //Motor skill Q (may bao)
+DigitalOut  Relay_3B(p21); //
+//DigitalOut  Relay_4A(p9);  //
+//DigitalOut  Relay_4B(p16); //
+DigitalOut  kichdien(p17);  //relay ac inverter 12DC -220AC
+//DigitalOut  Relay_2(p18);  //
+//DigitalOut  Relay_3(p19);  //
+//DigitalOut  Relay_4(p20);  //
 
 Serial      pc(p10, p11);
 BLEDevice   ble;
@@ -44,21 +44,29 @@ uint8_t g_cmd;
 ////////////////////////////////////////////////////////////////////
 void disconnectionCallback(const Gap::DisconnectionCallbackParams_t *params)
 {
-    ble.startAdvertising();
+    ble.startAdvertising();  //gửi gói tin quảng bá
     pc.printf("\n\r# disconnected\n\r");
-    led1 = 0;
+    led1 = 0;  //led off when disconnected
+    ////xoay tron va bat vu khi khi mat ket noi
+    motorleft_A = 1;  //Motor left go up
+    motorleft_B = 0;  //
+    motorright_A = 0;  //Motor right go down
+    motorright_B = 1;  //
+    Relay_3A = 0;
+    Relay_3B = 1;
+    
 }
 
 void connectionCallback( const Gap::ConnectionCallbackParams_t *params ) {
     pc.printf("\n\r# connected\n\r");
-    led1 = 1;
+    led1 = 1;  //led on when connected
 }
 void onDataWritten(const GattWriteCallbackParams *params)
 {
     if ((uartServicePtr != NULL) && (params->handle == uartServicePtr->getTXCharacteristicHandle())) {
         uint16_t bytesRead = params->len;
         g_cmd = params->data[0];
-        ble.updateCharacteristicValue(uartServicePtr->getRXCharacteristicHandle(), params->data, bytesRead);
+        ble.updateCharacteristicValue(uartServicePtr->getRXCharacteristicHandle(), params->data, bytesRead);  //update status to server
     }
 }
 
@@ -68,117 +76,77 @@ void periodicCallback(void)
    // led1 = !led1;
 }
 //////////////////////////////////////////////////////////////////////
-void up(void)       //su dung motor 1 & 2
+void down(void)       //su dung motor 1 & 2
 {
-    Relay_1A = 0;
-    Relay_1B = 1;
-    Relay_2A = 0;
-    Relay_2B = 1;
-    pc.printf("\n\r# go up\n\r");
-}
-void down(void)     //su dung motor 1 & 2
-{
-    Relay_1A = 1;
-    Relay_1B = 0;
-    Relay_2A = 1;
-    Relay_2B = 0;
+    motorleft_A = 0; //motor left go down
+    motorleft_B = 1; //
+    motorright_A = 0; //motor right do down
+    motorright_B = 1; //
     pc.printf("\n\r# go down\n\r");
+}
+void up(void)     //su dung motor 1 & 2
+{
+    motorleft_A = 1; //motor left go up
+    motorleft_B = 0; //
+    motorright_A = 1; //motor right go up
+    motorright_B = 0; //
+    pc.printf("\n\r# go up\n\r");
 }
 void left(void)     //su dung motor 1 & 2
 {
-    Relay_1A = 0;
-    Relay_1B = 1;
-    Relay_2A = 1;
-    Relay_2B = 0;
+    motorleft_A = 0;  //Motor left go down
+    motorleft_B = 1;  //
+    motorright_A = 1;  //Motor right go up
+    motorright_B = 0;  //
     pc.printf("\n\r# turn left\n\r");
 }
 void right(void)    //su dung motor 1 & 2
 {
-    Relay_1A = 1;
-    Relay_1B = 0;
-    Relay_2A = 0;
-    Relay_2B = 1;
+    motorleft_A = 1;  //Motor left go up
+    motorleft_B = 0;  //
+    motorright_A = 0;  //Motor right go down
+    motorright_B = 1;  //
     pc.printf("\n\r# turn right\n\r");
 }
 void stop(void)    //su dung motor 1 & 2
 {
-    Relay_1A = 1;
-    Relay_1B = 1;
-    Relay_2A = 1;
-    Relay_2B = 1;
+    motorleft_A = 1;
+    motorleft_B = 1;
+    motorright_A = 1;
+    motorright_B = 1;
     pc.printf("\n\r# stop\n\r");
 }
 /////////////////////////////////////////
-void motor3_up(void)
+void maybao_down(void)  //turn round down
 {
     Relay_3A = 0;
     Relay_3B = 1;
+    pc.printf("\n\r# may bao down\n\r");
 }
-void motor3_down(void)
+void maybao_up(void)   //turn round up
 {
     Relay_3A = 1;
     Relay_3B = 0;
-    pc.printf("\n\r# motor3 down\n\r");
+    pc.printf("\n\r# may bao up\n\r");
 }
-void motor3_stop(void)
+void maybao_stop(void)
 {
     Relay_3A = 1;
     Relay_3B = 1;
-    pc.printf("\n\r# motor 3 stop\n\r");
+    pc.printf("\n\r# may bao down\n\r");
 }
-/////////////////////////////////////////
-void motor4_up(void)
+void skillE(void)   //quay tro
 {
-    Relay_4A = 0;
-    Relay_4B = 1;
-    pc.printf("\n\r# motor 4 up\n\r");
+    motorleft_A = 1;  //Motor left go up
+    motorleft_B = 0;  //
+    motorright_A = 0;  //Motor right go down
+    motorright_B = 1;  //
+    Relay_3A = 0;  //turn round down maybao
+    Relay_3B = 1;  
 }
-void motor4_down(void)
+void skillR(void)
 {
-    Relay_4A = 1;
-    Relay_4B = 0;
-    pc.printf("\n\r# motor 4 down\n\r");
-}
-void motor4_stop(void)
-{
-    Relay_4A = 1;
-    Relay_4B = 1;
-    pc.printf("\n\r# motor 4 stop\n\r");
-}
-//////////////////////////////////////////////////////////////////////
-void test_relay(void)
-{
-    Relay_1A = 0; wait(1); Relay_1A = 1; wait(2);
-    Relay_1B = 0; wait(1); Relay_1B = 1; wait(2);
-    Relay_2A = 0; wait(1); Relay_2A = 1; wait(2);
-    Relay_2B = 0; wait(1); Relay_2B = 1; wait(2);
-    Relay_3A = 0; wait(1); Relay_3A = 1; wait(2);
-    Relay_3B = 0; wait(1); Relay_3B = 1; wait(2);
-    Relay_4A = 0; wait(1); Relay_4A = 1; wait(2);
-    Relay_4B = 0; wait(1); Relay_4B = 1; wait(2);
-    Relay_1 = 0;  wait(1); Relay_1 = 1;  wait(2);
-    Relay_2 = 0;  wait(1); Relay_2 = 1;  wait(2);
-    Relay_3 = 0;  wait(1); Relay_3 = 1;  wait(2);
-    Relay_4 = 0;  wait(1); Relay_4 = 1;  wait(2);
-
-    Relay_1 = 0;
-    Relay_2 = 0;
-    Relay_3 = 0;
-    Relay_4 = 0;
-    Relay_1A = 1; Relay_1B = 0;
-    Relay_2A = 1; Relay_2B = 0;
-    Relay_3A = 1; Relay_3B = 0;
-    Relay_4A = 1; Relay_4B = 0;
-    wait(0.5);
-    Relay_1 = 1;
-    Relay_2 = 1;
-    Relay_3 = 1;
-    Relay_4 = 1;
-    Relay_1A = 0; Relay_1B = 1;
-    Relay_2A = 0; Relay_2B = 1;
-    Relay_3A = 0; Relay_3B = 1;
-    Relay_4A = 0; Relay_4B = 1;
-    wait(2);
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -186,18 +154,13 @@ int main(void)
 {
     //Init hardware
     led1 = 0;
-    Relay_1A = 1;
-    Relay_1B = 1;
-    Relay_2A = 1;
-    Relay_2B = 1;
+    motorleft_A = 1;
+    motorleft_B = 1;
+    motorright_A = 1;
+    motorright_B = 1;
     Relay_3A = 1;
     Relay_3B = 1;
-    Relay_4A = 1;
-    Relay_4B = 1;
-    Relay_1 = 1;
-    Relay_2 = 1;
-    Relay_3 = 1;
-    Relay_4 = 1;
+    kichdien = 1;
     //Init UART
     pc.baud(115200);
     pc.printf("\n\r# BOT_BATTLE\n\r");
@@ -205,17 +168,17 @@ int main(void)
     Ticker ticker;
     ticker.attach(periodicCallback, 0.1); //sec
     //Init BLE
-    ble.init();
-    ble.onConnection(connectionCallback);
-    ble.onDisconnection(disconnectionCallback);
-    ble.onDataWritten(onDataWritten);
+    ble.init();  //start ble driver
+    ble.onConnection(connectionCallback);   //callback when connected
+    ble.onDisconnection(disconnectionCallback);   //callback when disconnected
+    ble.onDataWritten(onDataWritten);   //callback when receive data
     /* setup advertising */
-    ble.accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED);
-    ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);
-    ble.accumulateAdvertisingPayload(GapAdvertisingData::SHORTENED_LOCAL_NAME,
-                                     (const uint8_t *)"BOT_BATTLE", sizeof("BOT_BATTLE") - 1);
+    ble.accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED);     //chế độ hoạt động BLE (only le peripheral)
+    ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);      // có khả năng kêt nối vô hướng
+    ble.accumulateAdvertisingPayload(GapAdvertisingData::SHORTENED_LOCAL_NAME,                      //tên thiết bị ble peripheral 
+                                     (const uint8_t *)"BOT_BATTLE", sizeof("BOT_BATTLE") - 1);      //
     ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_128BIT_SERVICE_IDS,
-                                     (const uint8_t *)UARTServiceUUID_reversed, sizeof(UARTServiceUUID_reversed));
+                                     (const uint8_t *)UARTServiceUUID_reversed, sizeof(UARTServiceUUID_reversed)); //UUID service
     ble.setAdvertisingInterval(200); /* 1000ms; in multiples of 0.625ms. */
     ble.startAdvertising();
     UARTService uartService(ble);
@@ -230,38 +193,21 @@ while (true) {
         else if(g_cmd == 3) {down();    }
         else if(g_cmd == 4) {right();   }
         else if(g_cmd == 5) {stop();    }
-
-        else if(g_cmd == 6) {motor3_up();    }
-        else if(g_cmd == 7) {motor3_down();  }
-        else if(g_cmd == 8) {motor3_stop();  }
-        else if(g_cmd == 9)  {motor4_up();   }
-        else if(g_cmd == 10) {motor4_down(); }
-        else if(g_cmd == 11) {motor4_stop(); }
-
+        else if(g_cmd == 6) {maybao_up();    }  //
+        else if(g_cmd == 7) {maybao_down();  }  // Skill Q  
+        else if(g_cmd == 8) {maybao_stop();  }  //
         else if(g_cmd == 12) {
-            Relay_1 = ON;
-            pc.printf("\n\r# Relay_1 ON\n\r");  }
-        else if(g_cmd == 13) {
-            Relay_1 = OFF;
-            pc.printf("\n\r# Relay_1 OFF\n\r");  } 
+            skillE();
+            pc.printf("\n\r# turn on skill E - turn round \n\r");  } //Skill E
         else if(g_cmd == 14) {
-            Relay_2 = ON;
-            pc.printf("\n\r# Relay_2 ON\n\r");  }  
-        else if(g_cmd == 15) {
-            Relay_2 = OFF;
-            pc.printf("\n\r# Relay_2 OFF\n\r");  } 
+            skillR();
+            pc.printf("\n\r# turn on skill R - crazy dance \n\r");} //Skill R
         else if(g_cmd == 16) {
-            Relay_3 = ON;
-            pc.printf("\n\r# Relay_3 ON\n\r");  }  
-        else if(g_cmd == 17) {
-            Relay_3 = OFF;
-            pc.printf("\n\r# Relay_3 OFF\n\r");  } 
-        else if(g_cmd == 18) {
-            Relay_4 = ON;
-            pc.printf("\n\r# Relay_4 ON\n\r");  }  
-        else if(g_cmd == 19) {
-            Relay_4 = OFF;
-            pc.printf("\n\r# Relay_4 OFF\n\r");  } 
+            kichdien = ON;
+            pc.printf("\n\r# bat kich dien\n\r");    }  //
+        else if(g_cmd == 17) {                          //
+            kichdien = OFF;                             //skill W
+            pc.printf("\n\r# tat kich dien\n\r");    }  //
 
         g_cmd = 0;
 }
