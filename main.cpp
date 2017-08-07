@@ -26,9 +26,9 @@ DigitalOut  motorright_A(p24); //Motor right
 DigitalOut  motorright_B(p23); //
 DigitalOut  Relay_3A(p22); //Motor skill Q (may bao)
 DigitalOut  Relay_3B(p21); //
-//DigitalOut  Relay_4A(p9);  //
-//DigitalOut  Relay_4B(p16); //
-DigitalOut  kichdien(p17);  //relay ac inverter 12DC -220AC
+DigitalOut  kichdien(p9);  //relay ac inverter 12DC -220AC
+DigitalOut  kichdienB(p16); //
+//DigitalOut  kichdien(p17);  //
 //DigitalOut  Relay_2(p18);  //
 //DigitalOut  Relay_3(p19);  //
 //DigitalOut  Relay_4(p20);  //
@@ -41,6 +41,8 @@ UARTService *uartServicePtr;
 #define     ON          0
 #define     OFF         1
 uint8_t g_cmd;
+uint8_t chieu_maybao=0; //xac dinh chieu may bao
+uint8_t status_maybao=1;
 ////////////////////////////////////////////////////////////////////
 void disconnectionCallback(const Gap::DisconnectionCallbackParams_t *params)
 {
@@ -97,13 +99,13 @@ void left(void)     //su dung motor 1 & 2
     motorleft_A = 0;  //Motor left go down
     motorleft_B = 1;  //
     motorright_A = 1;  //Motor right go up
-    motorright_B = 0;  //
+    motorright_B = 1;  //
     pc.printf("\n\r# turn left\n\r");
 }
 void right(void)    //su dung motor 1 & 2
 {
     motorleft_A = 1;  //Motor left go up
-    motorleft_B = 0;  //
+    motorleft_B = 1;  //
     motorright_A = 0;  //Motor right go down
     motorright_B = 1;  //
     pc.printf("\n\r# turn right\n\r");
@@ -117,25 +119,32 @@ void stop(void)    //su dung motor 1 & 2
     pc.printf("\n\r# stop\n\r");
 }
 /////////////////////////////////////////
-void maybao_down(void)  //turn round down
+void skillQ(void)  //turn round down
 {
-    Relay_3A = 0;
-    Relay_3B = 1;
-    pc.printf("\n\r# may bao down\n\r");
+    status_maybao = !status_maybao;  //dao trang thai may bao
+    if(status_maybao == 0)    //may bao on
+    {
+         if(chieu_maybao == 1)
+         {
+            Relay_3A = 0;  //turn round down maybao
+            Relay_3B = 1;
+            pc.printf("\n\r# turn round down maybao\n\r");
+         }  
+         else if(chieu_maybao == 0)
+         {
+            Relay_3A = 1;  //turn round down maybao
+            Relay_3B = 0;
+            pc.printf("\n\r# turn round up maybao\n\r");
+         }
+    }
+    else if(status_maybao == 1)  //may bao off
+    {
+        Relay_3A = 1;  //turn round down maybao
+        Relay_3B = 1;
+        pc.printf("\n\r# turn off maybao\n\r");
+    }
 }
-void maybao_up(void)   //turn round up
-{
-    Relay_3A = 1;
-    Relay_3B = 0;
-    pc.printf("\n\r# may bao up\n\r");
-}
-void maybao_stop(void)
-{
-    Relay_3A = 1;
-    Relay_3B = 1;
-    pc.printf("\n\r# may bao down\n\r");
-}
-void skillE(void)   //quay tro
+void skillE(void)   //quay tron+turn on may bao
 {
     motorleft_A = 1;  //Motor left go up
     motorleft_B = 0;  //
@@ -143,10 +152,25 @@ void skillE(void)   //quay tro
     motorright_B = 1;  //
     Relay_3A = 0;  //turn round down maybao
     Relay_3B = 1;  
+    pc.printf("\n\r# turn on skill E\n\r");
+}
+void offskillE(void)
+{
+    motorleft_A = 1;  //Motor left go up
+    motorleft_B = 1;  //
+    motorright_A = 1;  //Motor right go down
+    motorright_B = 1;  //
+    Relay_3A = 1;  //turn round down maybao
+    Relay_3B = 1;  
+    pc.printf("\n\r turn off skill E\n\r");
 }
 void skillR(void)
 {
-    
+   pc.printf("\n\r#turn on skill R\n\r"); 
+}
+void offskillR(void)
+{
+    pc.printf("\n\r#turn off skill R\n\r");
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -161,6 +185,7 @@ int main(void)
     Relay_3A = 1;
     Relay_3B = 1;
     kichdien = 1;
+    kichdienB = 1;
     //Init UART
     pc.baud(115200);
     pc.printf("\n\r# BOT_BATTLE\n\r");
@@ -176,7 +201,7 @@ int main(void)
     ble.accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED);     //chế độ hoạt động BLE (only le peripheral)
     ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);      // có khả năng kêt nối vô hướng
     ble.accumulateAdvertisingPayload(GapAdvertisingData::SHORTENED_LOCAL_NAME,                      //tên thiết bị ble peripheral 
-                                     (const uint8_t *)"BOT_BATTLE", sizeof("BOT_BATTLE") - 1);      //
+                                     (const uint8_t *)"TAO LA DUNG!", sizeof("TAO LA DUNG") - 1);      //
     ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_128BIT_SERVICE_IDS,
                                      (const uint8_t *)UARTServiceUUID_reversed, sizeof(UARTServiceUUID_reversed)); //UUID service
     ble.setAdvertisingInterval(200); /* 1000ms; in multiples of 0.625ms. */
@@ -193,21 +218,14 @@ while (true) {
         else if(g_cmd == 3) {down();    }
         else if(g_cmd == 4) {right();   }
         else if(g_cmd == 5) {stop();    }
-        else if(g_cmd == 6) {maybao_up();    }  //
-        else if(g_cmd == 7) {maybao_down();  }  // Skill Q  
-        else if(g_cmd == 8) {maybao_stop();  }  //
-        else if(g_cmd == 12) {
-            skillE();
-            pc.printf("\n\r# turn on skill E - turn round \n\r");  } //Skill E
-        else if(g_cmd == 14) {
-            skillR();
-            pc.printf("\n\r# turn on skill R - crazy dance \n\r");} //Skill R
-        else if(g_cmd == 16) {
-            kichdien = ON;
-            pc.printf("\n\r# bat kich dien\n\r");    }  //
-        else if(g_cmd == 17) {                          //
-            kichdien = OFF;                             //skill W
-            pc.printf("\n\r# tat kich dien\n\r");    }  //
+        else if(g_cmd == 6) {chieu_maybao = !chieu_maybao;  }  //thiet lap chieu may bao
+        else if(g_cmd == 7) {skillQ(); }  // on/off skill Q
+        else if(g_cmd == 9) {kichdien = 0; pc.printf("\n\r# turn on kich dien\n\r"); }  //on skill W    
+        else if(g_cmd ==11) {kichdien = 1; pc.printf("\n\r# turn off kich dien \n\r");}  //off skill W
+        else if(g_cmd == 12) {skillE();    }  //on skill E
+        else if(g_cmd == 13) {offskillE(); }  //off skill E
+        else if(g_cmd == 16) {skillR();    }  //on skill R
+        else if(g_cmd == 17) {offskillR(); }  //off skill R
 
         g_cmd = 0;
 }
