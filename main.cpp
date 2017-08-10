@@ -43,6 +43,7 @@ UARTService *uartServicePtr;
 uint8_t g_cmd;
 uint8_t chieu_maybao=0; //xac dinh chieu may bao
 uint8_t status_maybao=1;
+uint8_t reversion=0;  //state of robot( reverse or not reverse)
 ////////////////////////////////////////////////////////////////////
 void disconnectionCallback(const Gap::DisconnectionCallbackParams_t *params)
 {
@@ -211,21 +212,44 @@ int main(void)
 
 while (true) {
         ble.waitForEvent();
-        //test_relay();
-
-        if     (g_cmd == 1) {up();      }
-        else if(g_cmd == 2) {left();    }
-        else if(g_cmd == 3) {down();    }
-        else if(g_cmd == 4) {right();   }
+////////////////motion////////////////////////
+        if     (g_cmd == 1) {
+            if(reversion == 0)  //if bot isn't reversed
+                up();           
+            else down();      }  //go down when bot is reversed
+        else if(g_cmd == 2) {
+            if(reversion == 0)
+                left();
+            else right();    }
+        else if(g_cmd == 3) {
+            if(reversion == 0)
+                down();
+            else up();    }
+        else if(g_cmd == 4) {
+            if(reversion == 0)
+                right();
+            else left();   }
         else if(g_cmd == 5) {stop();    }
+        
+/////////////////SKILL Q///////////////////
+
+
         else if(g_cmd == 6) {chieu_maybao = !chieu_maybao;  }  //thiet lap chieu may bao
         else if(g_cmd == 7) {skillQ(); }  // on/off skill Q
+        
+////////////////SKILL W///////////////////
         else if(g_cmd == 9) {kichdien = 0; pc.printf("\n\r# turn on kich dien\n\r"); }  //on skill W    
         else if(g_cmd ==11) {kichdien = 1; pc.printf("\n\r# turn off kich dien \n\r");}  //off skill W
+        
+////////////////SKILL E///////////////////
+
         else if(g_cmd == 12) {skillE();    }  //on skill E
         else if(g_cmd == 13) {offskillE(); }  //off skill E
+        
+/////////////////SKILL R///////////////////
         else if(g_cmd == 16) {skillR();    }  //on skill R
-        else if(g_cmd == 17) {offskillR(); }  //off skill R
+        else if(g_cmd == 17) {offskillR(); }
+        else if(g_cmd == 18) {reversion = !reversion; }  
 
         g_cmd = 0;
 }
