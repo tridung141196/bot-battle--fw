@@ -18,11 +18,10 @@
 #include "ble/BLE.h"
 #include "ble/services/UARTService.h"
 
-
 DigitalOut  led1(p7);
 DigitalOut  motorleft_A(p28); //Motor left
-DigitalOut  motorleft_B(p25); //
-DigitalOut  motorright_A(p24); //Motor right
+PwmOut  motorleft_B(p25); //
+PwmOut  motorright_A(p24); //Motor right
 DigitalOut  motorright_B(p23); //
 DigitalOut  Relay_3A(p22); //Motor skill Q (may bao)
 DigitalOut  Relay_3B(p21); //
@@ -51,12 +50,12 @@ void disconnectionCallback(const Gap::DisconnectionCallbackParams_t *params)
     pc.printf("\n\r# disconnected\n\r");
     led1 = 0;  //led off when disconnected
     ////xoay tron va bat vu khi khi mat ket noi
-    motorleft_A = 1;  //Motor left go up
-    motorleft_B = 0;  //
-    motorright_A = 0;  //Motor right go down
-    motorright_B = 1;  //
-    Relay_3A = 0;
-    Relay_3B = 1;
+//    motorleft_A = 1;  //Motor left go up
+//    motorleft_B = 0;  //
+//    motorright_A = 0;  //Motor right go down
+//    motorright_B = 1;  //
+//    Relay_3A = 0;
+//    Relay_3B = 1;
     
 }
 
@@ -79,36 +78,36 @@ void periodicCallback(void)
    // led1 = !led1;
 }
 //////////////////////////////////////////////////////////////////////
-void down(void)       //su dung motor 1 & 2
+void up(void)       //su dung motor 1 & 2
 {
     motorleft_A = 0; //motor left go down
-    motorleft_B = 1; //
-    motorright_A = 0; //motor right do down
+    motorleft_B.write (0.7); //
+    motorright_A.write(0); //motor right do down
     motorright_B = 1; //
-    pc.printf("\n\r# go down\n\r");
+    pc.printf("\n\r# go up\n\r");
 }
-void up(void)     //su dung motor 1 & 2
+void down(void)     //su dung motor 1 & 2
 {
     motorleft_A = 1; //motor left go up
-    motorleft_B = 0; //
-    motorright_A = 1; //motor right go up
+    motorleft_B.write(0.3); //
+    motorright_A.write(1); //motor right go up
     motorright_B = 0; //
-    pc.printf("\n\r# go up\n\r");
+    pc.printf("\n\r# go down\n\r");
 }
 void left(void)     //su dung motor 1 & 2
 {
-    motorleft_A = 0;  //Motor left go down
-    motorleft_B = 1;  //
-    motorright_A = 1;  //Motor right go up
+    motorleft_A = 1;  //Motor left go down
+    motorleft_B = 0;  //
+    motorright_A = 0;  //Motor right go up
     motorright_B = 1;  //
     pc.printf("\n\r# turn left\n\r");
 }
 void right(void)    //su dung motor 1 & 2
 {
-    motorleft_A = 1;  //Motor left go up
+    motorleft_A = 0;  //Motor left go up
     motorleft_B = 1;  //
-    motorright_A = 0;  //Motor right go down
-    motorright_B = 1;  //
+    motorright_A = 1;  //Motor right go down
+    motorright_B = 0;  //
     pc.printf("\n\r# turn right\n\r");
 }
 void stop(void)    //su dung motor 1 & 2
@@ -168,10 +167,30 @@ void offskillE(void)
 void skillR(void)
 {
    pc.printf("\n\r#turn on skill R\n\r"); 
+   motorleft_A = 0;
+    motorleft_B = 1;
+    motorright_A = 1;
+    motorright_B = 0;
+    wait(0.9);
+    motorleft_A = 1;
+    motorleft_B = 0;
+    motorright_A = 1;
+    motorright_B = 0;
+    wait(1.2);
+    motorleft_A = 1;
+    motorleft_B = 1;
+    motorright_A = 1;
+    motorright_B = 1;
+    wait(0.1);
+    motorleft_A = 0;
+    motorleft_B = 1;
+    motorright_A = 0;
+    motorright_B = 1;
 }
 void offskillR(void)
 {
     pc.printf("\n\r#turn off skill R\n\r");
+    
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -180,8 +199,10 @@ int main(void)
     //Init hardware
     led1 = 0;
     motorleft_A = 1;
-    motorleft_B = 1;
-    motorright_A = 1;
+    motorleft_B.period(0.01);
+    motorright_A.period(0.01);
+    motorleft_B.write(1);
+    motorright_A.write(1);
     motorright_B = 1;
     Relay_3A = 1;
     Relay_3B = 1;
@@ -202,7 +223,7 @@ int main(void)
     ble.accumulateAdvertisingPayload(GapAdvertisingData::BREDR_NOT_SUPPORTED);     //chế độ hoạt động BLE (only le peripheral)
     ble.setAdvertisingType(GapAdvertisingParams::ADV_CONNECTABLE_UNDIRECTED);      // có khả năng kêt nối vô hướng
     ble.accumulateAdvertisingPayload(GapAdvertisingData::SHORTENED_LOCAL_NAME,                      //tên thiết bị ble peripheral 
-                                     (const uint8_t *)"TAO LA DUNG!", sizeof("TAO LA DUNG") - 1);      //
+                                     (const uint8_t *)"GAREN", sizeof("TAO LA DUNG") - 1);      //
     ble.accumulateAdvertisingPayload(GapAdvertisingData::COMPLETE_LIST_128BIT_SERVICE_IDS,
                                      (const uint8_t *)UARTServiceUUID_reversed, sizeof(UARTServiceUUID_reversed)); //UUID service
     ble.setAdvertisingInterval(200); /* 1000ms; in multiples of 0.625ms. */
@@ -238,17 +259,21 @@ while (true) {
         else if(g_cmd == 7) {skillQ(); }  // on/off skill Q
         
 ////////////////SKILL W///////////////////
-        else if(g_cmd == 9) {kichdien = 0; pc.printf("\n\r# turn on kich dien\n\r"); }  //on skill W    
-        else if(g_cmd ==11) {kichdien = 1; pc.printf("\n\r# turn off kich dien \n\r");}  //off skill W
+        else if(g_cmd == 9) {kichdien = !kichdien;
+        if(kichdien == 0 ) pc.printf("\n\r# turn on kich dien\n\r");
+        else pc.printf("\n\r# turn off kich dien\n\r");
+         }  //on skill W    
+//        else if(g_cmd ==11) {kichdien = 1; pc.printf("\n\r# turn off kich dien \n\r");}  //off skill W
         
 ////////////////SKILL E///////////////////
 
         else if(g_cmd == 12) {skillE();    }  //on skill E
-        else if(g_cmd == 13) {offskillE(); }  //off skill E
+       // else if(g_cmd == 13) {offskillE(); }  //off skill E
         
 /////////////////SKILL R///////////////////
         else if(g_cmd == 16) {skillR();    }  //on skill R
-        else if(g_cmd == 17) {offskillR(); }
+ //       else if(g_cmd == 17) {offskillR(); }
+ ///////////Check! are bot reversed? //////////////////////
         else if(g_cmd == 18) {reversion = !reversion; }  
 
         g_cmd = 0;
