@@ -2,7 +2,8 @@
 
 Repo này sẽ bao gồm firmware điều khiển robot ( dựa trên chip NRF51822 trên Board VBLUno) với [mbed-cli](https://github.com/ARMmbed/mbed-cli).
 
-# THIẾT LẬP MÔI TRƯỜNG
+THIẾT LẬP MÔI TRƯỜNG
+----------------------
 
 Để build được ứng dụng, trước hết ta phải cài đặt các phần mềm như:
 * [CMake](http://www.cmake.org/download/).
@@ -11,11 +12,13 @@ Repo này sẽ bao gồm firmware điều khiển robot ( dựa trên chip NRF51
 * [ARM GCC toolchain 4.9.x](https://launchpad.net/gcc-arm-embedded/+milestone/4.9-2015-q3-update).
 * Giả lập serial monitor (ví dụ screen, pySerial)
 
-# HARDWARE
+HARDWARE
+--------
 
 Về hardware chúng ta sẽ sử dụng board [VBLUno](https://vngiotlab.github.io/vbluno/vi/mydoc_introduction_vi.html). do VNG sản xuất dựa trên chip NRF51822 của NORDIC.
 
-# BUILD VÀ TEST CHƯƠNG TRÌNH
+BUILD VÀ TEST CHƯƠNG TRÌNH
+---------------------------
 
 __Để build một chương trình dựa trên Mbed OS ta thực hiện các bước như sau:__
 1. CLone về dự án ( ví dụ như bot battle)
@@ -70,7 +73,8 @@ Trong project này thư mục sẽ là ```BUILD/NRF51_DK/GCC_ARM```
 
 9. Reset lại chip.
 
-# GIAO THỨC BLE ĐƯỢC DÙNG TRONG ỨNG DỤNG BOTBATTLE
+GIAO THỨC BLE ĐƯỢC DÙNG TRONG ỨNG DỤNG BOTBATTLE
+---------------------------------------------------
 
 1. Service
 
